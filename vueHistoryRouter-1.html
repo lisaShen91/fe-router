@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+    <title>vue history router</title>
+</head>
+<body>
+<div class="vue-hash">
+    <ul>
+        <li>
+            <router-link to="/home">home</router-link>
+        </li>
+        <li>
+            <router-link to="/about">about</router-link>
+        </li>
+    </ul>
+    <router-view></router-view>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script>
+    var routes = {
+        '/home': {
+            template: '<h2>Home</h2>'
+        },
+        '/about': {
+            template: '<h2>About</h2>'
+        }
+    };
+    function RouterView() {
+        return {
+            data: function() {
+                return {
+                    routeView: null
+                }
+            },
+            beforeMount: function() {
+                this.$root.$on('popstate', this.onPopState);
+            },
+            methods: {
+                onPopState: function() {
+                    var path = location.pathname;
+                    this.routeView = this.$root.$routes[path] || null;
+                    console.log('[Vue] popstate:', path)
+                }
+            },
+            render(h) {
+                return h(this.routeView)
+            },
+            beforeDestroy: function() {
+                this.$root.$off('popstate', this.onPopState);
+            },
+        }
+    }
+    function RouterLink() {
+        return {
+            props: {
+                to: String
+            },
+            methods: {
+                onclick: function(e) {
+                    e.preventDefault();
+                    history.pushState(null, '', this.to);
+                    this.$root.$emit('popstate');
+                }
+            },
+            render: function(h) {
+                this.onclick = this.onclick.bind(this);
+                return h('a', {
+                    on: {
+                        'click': this.onclick
+                    },
+                    attrs: {
+                        href: ''
+                    },
+                }, this.$slots.default)
+            }
+        }
+    }
+    
+    const app = new Vue({
+        el: '.vue-hash',
+        components: {
+            'router-view': RouterView(),
+            'router-link': RouterLink()
+        },
+        beforeCreate: function() {
+            this.$routes = routes
+        },
+        created: function() {
+            this.$routes = routes;
+        },
+        beforeMount: function() {
+            window.addEventListener('popstate', this.onPopState);
+        },
+        methods: {
+            onPopState: function(...args) {
+                this.$emit('popstate', ...args);
+            }
+        },
+        beforeDestroy: function() {
+            window.removeEventListener('popstate', this.onPopState);
+        },
+    })
+</script>
+</body>
+</html>

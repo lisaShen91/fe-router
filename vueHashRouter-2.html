@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+    <title>vue hash router</title>
+</head>
+<body>
+<div class="vue-hash">
+    <ul>
+        <li>
+            <router-link to="/home">home</router-link>
+        </li>
+        <li>
+            <router-link to="/about">about</router-link>
+        </li>
+    </ul>
+    <router-view></router-view>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script>
+    var routes = {
+        '/home': {
+            template: '<h2>Home</h2>'
+        },
+        '/about': {
+            template: '<h2>About</h2>'
+        }
+    };
+    function RouterView() {
+        return {
+            data: function() {
+                return {
+                    routeView: null
+                }
+            },
+            created: function() {
+                this.boundHashChange = this.onHashChange.bind(this)
+            },
+            beforeMount: function() {
+                window.addEventListener('hashchange', this.boundHashChange)
+            },
+            mounted: function() {
+                this.onHashChange()
+            },
+            beforeDestroy: function() {
+                window.removeEventListener('hashchange', this.boundHashChange)
+            },
+            methods: {
+                onHashChange: function() {
+                    const path = location.hash.substring(1);
+                    this.routeView = this.$root.$routes[path] || null;
+                    console.log('vue:hashchange:', path)
+                }
+            },
+            render(h) {
+                return h(this.routeView)
+            }
+        }
+    }
+    function RouterLink() {
+        return {
+            props: {
+                to: String
+            },
+            methods: {
+                onclick: function(e) {
+                    e.preventDefault();
+                    window.location.hash = '#' + this.to;
+                }
+            },
+            render: function(h) {
+                this.onclick = this.onclick.bind(this);
+                return h('a', {
+                    on: {
+                        'click': this.onclick
+                    },
+                    attrs: {
+                        href: ''
+                    },
+                }, this.$slots.default)
+            }
+        }
+    }
+    
+    const app = new Vue({
+        el: '.vue-hash',
+        components: {
+            'router-view': RouterView(),
+            'router-link': RouterLink()
+        },
+        beforeCreate: function() {
+            this.$routes = routes
+        },
+    })
+</script>
+</body>
+</html>
